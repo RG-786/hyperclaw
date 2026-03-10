@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "description": "HyperClaw TinyClaw Multi-Agent Team Configuration",
+  "teams": [
+    {
+      "id": "team-1",
+      "name": "Primary Execution Team",
+      "description": "Main task processing and delegation pipeline",
+      "agents": [
+        {
+          "id": "agent-a",
+          "name": "Agent Alpha",
+          "role": "orchestrator",
+          "description": "Receives top-level tasks, decomposes and hands off to Agent Beta",
+          "model": "qwen3:8b",
+          "docker_image": "python:3.12-slim",
+          "memory_limit": "192m",
+          "cpu_quota": 50000,
+          "workspace": "~/hyperclaw/agents/agent-a/",
+          "capabilities": ["task_decomposition", "planning", "summarization"],
+          "handoff_rules": [
+            {
+              "condition": "task_type == 'code_execution'",
+              "handoff_to": "agent-b",
+              "reason": "Code execution delegated to specialized agent"
+            },
+            {
+              "condition": "task_type == 'research'",
+              "handoff_to": "agent-b",
+              "reason": "Research tasks handled by Beta"
+            }
+          ],
+          "env_vars": {
+            "AGENT_ROLE": "orchestrator",
+            "MAX_RETRIES": "3",
+            "TIMEOUT_SECONDS": "60"
+          }
+        },
+        {
+          "id": "agent-b",
+          "name": "Agent Beta",
+          "role": "executor",
+          "description": "Executes delegated tasks from Agent Alpha, reports results back",
+          "model": "qwen2.5-coder:7b",
+          "docker_image": "python:3.12-slim",
+          "memory_limit": "192m",
+          "cpu_quota": 50000,
+          "workspace": "~/hyperclaw/agents/agent-b/",
+          "capabilities": ["code_execution", "research", "data_processing", "api_calls"],
+          "handoff_rules": [
+            {
+              "condition": "task_type == 'escalation'",
+              "handoff_to": "agent-a",
+              "reason": "Complex decisions escalated back to orchestrator"
+            }
+          ],
+          "env_vars": {
+            "AGENT_ROLE": "executor",
+            "MAX_RETRIES": "5",
+            "TIMEOUT_SECONDS": "120"
+          }
+        }
+      ]
+    },
+    {
+      "id": "team-2",
+      "name": "Gateway Team",
+      "description": "Handles messaging platform integrations",
+      "agents": [
+        {
+          "id": "agent-c",
+          "name": "Agent Gamma",
+          "role": "gateway",
+          "description": "Go-based gateway agent for Telegram/Discord messaging",
+          "model": "none",
+          "runtime": "go",
+          "memory_limit": "64m",
+          "cpu_quota": 25000,
+          "workspace": "~/hyperclaw/agents/agent-c/",
+          "capabilities": ["telegram_bridge", "discord_bridge", "message_routing"],
+          "env_vars": {
+            "AGENT_ROLE": "gateway",
+            "POLL_INTERVAL_MS": "500",
+            "MAX_QUEUE_DEPTH": "100"
+          }
+        }
+      ]
+    }
+  ],
+  "global_settings": {
+    "queue_db": "~/hyperclaw/queue.db",
+    "log_dir": "~/hyperclaw/logs",
+    "max_idle_ram_mb": 5,
+    "startup_timeout_ms": 10000,
+    "heartbeat_interval_seconds": 30,
+    "task_retention_hours": 24
+  }
+}
